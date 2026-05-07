@@ -16,11 +16,11 @@ function updateFavCount() {
 }
 
 function toggleFavorite(product) {
-    const index = favorites.findIndex(p => p.title === product.title);
-    if (index === -1) {
+    const isNowFav = favorites.findIndex(p => p.title === product.title) === -1;
+    if (isNowFav) {
         favorites.push(product);
     } else {
-        favorites.splice(index, 1);
+        favorites = favorites.filter(p => p.title !== product.title);
     }
     localStorage.setItem('daraz_favorites', JSON.stringify(favorites));
     updateFavCount();
@@ -28,18 +28,35 @@ function toggleFavorite(product) {
     // If we are on favorites page, re-render
     if (typeof renderFavoritesPage === 'function') renderFavoritesPage();
     
-    // Update main grids to sync heart colors
-    const cards = document.querySelectorAll('.card');
+    // Update all heart icons on the page (Grid + Detail Page)
+    syncHeartIcons(product.title, isNowFav);
+}
+
+function syncHeartIcons(productTitle, isFav) {
+    // 1. Update Grid Cards
+    const cards = document.querySelectorAll('.card, .fav-card');
     cards.forEach(card => {
-        const title = card.querySelector('h3').textContent;
-        if (title === product.title) {
-            const btn = card.querySelector('.btn-wishlist');
-            const icon = btn.querySelector('i');
-            const isNowFav = favorites.some(p => p.title === product.title);
-            btn.classList.toggle('active', isNowFav);
-            icon.className = `fa${isNowFav ? 's' : 'r'} fa-heart`;
+        const titleEl = card.querySelector('h3');
+        if (titleEl && titleEl.textContent === productTitle) {
+            const btn = card.querySelector('.btn-wishlist, .btn-fav-large, .fav-del-btn');
+            if (btn) {
+                btn.classList.toggle('active', isFav);
+                const icon = btn.querySelector('i');
+                if (icon) icon.className = `fa${isFav ? 's' : 'r'} fa-heart`;
+            }
         }
     });
+
+    // 2. Update Detail Page Button (if visible)
+    const detailBtn = document.getElementById('detail-fav-btn');
+    if (detailBtn) {
+        const detailTitle = document.querySelector('.detail-info h2');
+        if (detailTitle && detailTitle.textContent === productTitle) {
+            detailBtn.classList.toggle('active', isFav);
+            const icon = detailBtn.querySelector('i');
+            if (icon) icon.className = `fa${isFav ? 's' : 'r'} fa-heart`;
+        }
+    }
 }
 
 function clearFavorites() {
@@ -186,6 +203,14 @@ function createProductCard(product) {
         </div>
         <div class="card-content">
             <h3 onclick="window.location.href='/product/${product.id}'">${product.title}</h3>
+            <div class="card-meta-row">
+                <div class="card-rating">
+                    ${parseFloat(product.rating) > 0 
+                        ? `<i class="fas fa-star" style="color:#f9cb28"></i> <span>${product.rating}</span>` 
+                        : `<span style="color:#555; font-size:0.75rem">No reviews</span>`}
+                </div>
+                <div class="card-cat-badge">${product.category.replace('-',' ')}</div>
+            </div>
             <div class="price-container">
                 <span class="price">${product.new_price}</span>
                 ${product.old_price ? `<span class="old-price">${product.old_price}</span>` : ''}

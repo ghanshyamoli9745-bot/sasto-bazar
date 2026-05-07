@@ -1,19 +1,23 @@
 import threading
 import schedule
 import time
+import os
+from dotenv import load_dotenv
 from functools import wraps
 from flask import Flask, jsonify, request, render_template
 from database import setup_db, get_products, get_product, record_click, add_to_wishlist, get_categories, generate_api_key, validate_api_key, get_api_key_by_owner, get_revenue_stats
 from scraper import run_scraper_sync
 from fake_generator import generate_trending_scores
 
+load_dotenv()
+
 app = Flask(__name__)
 
 setup_db()
 
-# Admin Credentials
-ADMIN_EMAIL = "ghanshyamoli922@gmail.com"
-ADMIN_PASS = "9744556050"
+# Admin Credentials (Move to .env for production)
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "ghanshyamoli922@gmail.com")
+ADMIN_PASS = os.getenv("ADMIN_PASS", "9744556050")
 
 def api_key_required(f):
     @wraps(f)

@@ -45,10 +45,13 @@ def fetch_daraz_category(category_name):
                         
                         if name and price:
                             affiliate_link = generate_affiliate_link(item_url)
+                            rating = item.get('ratingScore')
+                            reviews = item.get('review', '0') # Some APIs use 'review', some 'reviewCount'
+                            
                             product_data = {
                                 'title': name, 'image': image, 'old_price': original_price,
                                 'new_price': f"Rs. {price}", 'discount_percent': discount,
-                                'rating': str(item.get('ratingScore', '5.0')),
+                                'rating': str(rating) if rating else "0",
                                 'category': category_name, 'product_link': item_url,
                                 'affiliate_link': affiliate_link
                             }
