@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - Daraz Deals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .detail-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid #333;
+        }
+        .detail-img img {
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .detail-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .detail-info h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        .detail-price-container {
+            margin-bottom: 30px;
+        }
+        .detail-price {
+            font-size: 2.5rem;
+            color: var(--price-color);
+            font-weight: 800;
+        }
+        .detail-old-price {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            text-decoration: line-through;
+            margin-left: 15px;
+        }
+        .detail-discount {
+            display: inline-block;
+            background: var(--accent-gradient);
+            color: black;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .buy-now-large {
+            display: block;
+            text-align: center;
+            padding: 15px;
+            background: var(--accent-gradient);
+            color: black;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            transition: 0.3s;
+        }
+        .buy-now-large:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(255, 77, 77, 0.4);
+        }
+        @media (max-width: 768px) {
+            .detail-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="back-link">← Back to Deals</a>
+        <h1>DARAZ DEALS</h1>
+    </header>
+
+    <main>
+        <div id="product-detail-root">
+            <div style="text-align: center; padding: 100px;">Loading product details...</div>
+        </div>
+    </main>
+
+    <script>
+        const productId = {{ product_id }};
+        
+        async function loadProductDetail() {
+            try {
+                const response = await fetch(`/api/product/${productId}`);
+                const product = await response.json();
+                renderDetail(product);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function renderDetail(product) {
+            const root = document.getElementById('product-detail-root');
+            root.innerHTML = `
+                <div class="detail-container">
+                    <div class="detail-img">
+                        <img src="${product.image}" alt="${product.title}">
+                    </div>
+                    <div class="detail-info">
+                        ${product.discount_percent ? `<div class="detail-discount">${product.discount_percent} Off</div>` : ''}
+                        <h2>${product.title}</h2>
+                        <div class="detail-price-container">
+                            <span class="detail-price">${product.new_price}</span>
+                            ${product.old_price ? `<span class="detail-old-price">${product.old_price}</span>` : ''}
+                        </div>
+                        <p style="color: #888; margin-bottom: 30px;">
+                            Category: <span style="color: #fff; text-transform: capitalize;">${product.category.replace('-', ' ')}</span>
+                        </p>
+                        <a href="${product.affiliate_link}" target="_blank" class="buy-now-large">Buy Now on Daraz</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProductDetail();
+    </script>
+</body>
+</html>

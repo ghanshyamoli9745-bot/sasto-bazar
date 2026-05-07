@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DealSathi | My Wishlist</title>
+    <meta name="description" content="Your saved Daraz deals — all in one place.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css?v=2.0">
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='/'">DealSathi</div>
+        <nav class="top-nav">
+            <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+            <a href="/favorites" class="nav-link active"><i class="fas fa-heart"></i> Favorites <span id="fav-count" class="count-badge">0</span></a>
+        </nav>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search saved deals...">
+            <button onclick="searchFavorites()"><i class="fas fa-search"></i></button>
+        </div>
+    </header>
+
+    <!-- Favorites Hero -->
+    <section class="fav-hero">
+        <div class="fav-hero-bg"></div>
+        <div class="fav-hero-content">
+            <div class="fav-hero-left">
+                <div class="fav-hero-icon"><i class="fas fa-heart"></i></div>
+                <div>
+                    <h1>My Saved Deals</h1>
+                    <p>Your personal Daraz wishlist — curated just for you</p>
+                </div>
+            </div>
+            <div class="fav-stats-bar">
+                <div class="fav-stat-item">
+                    <span class="fav-stat-val" id="stat-count">0</span>
+                    <span class="fav-stat-lbl">Items Saved</span>
+                </div>
+                <div class="fav-stat-sep"></div>
+                <div class="fav-stat-item">
+                    <span class="fav-stat-val fav-green" id="stat-savings">Rs. 0</span>
+                    <span class="fav-stat-lbl">You'd Save</span>
+                </div>
+                <div class="fav-stat-sep"></div>
+                <div class="fav-stat-item">
+                    <span class="fav-stat-val fav-orange" id="stat-avg">0%</span>
+                    <span class="fav-stat-lbl">Avg. Discount</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Toolbar -->
+    <div class="fav-toolbar">
+        <div class="fav-sort-group">
+            <span class="fav-sort-label"><i class="fas fa-sort"></i> Sort:</span>
+            <button class="fav-sort-btn active" onclick="sortFavs('default', this)">Recent</button>
+            <button class="fav-sort-btn" onclick="sortFavs('discount', this)">Discount %</button>
+            <button class="fav-sort-btn" onclick="sortFavs('price_low', this)">Price ↑</button>
+            <button class="fav-sort-btn" onclick="sortFavs('price_high', this)">Price ↓</button>
+        </div>
+        <button class="fav-clear-btn" onclick="clearFavorites()">
+            <i class="fas fa-trash-alt"></i><span> Clear All</span>
+        </button>
+    </div>
+
+    <main>
+        <div id="favorites-grid" class="fav-grid"></div>
+    </main>
+
+    <div class="mobile-nav">
+        <a href="/" class="mobile-nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="/favorites" class="mobile-nav-item active"><i class="fas fa-heart"></i><span>Favorites</span></a>
+        <a href="#" onclick="document.getElementById('searchInput').focus(); return false;" class="mobile-nav-item"><i class="fas fa-search"></i><span>Search</span></a>
+    </div>
+
+    <script src="/static/app.js?v=2.0"></script>
+    <script>
+        let currentSort = 'default';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateFavCount();
+            renderFavoritesPage();
+        });
+
+        document.getElementById('searchInput')?.addEventListener('input', searchFavorites);
+
+        function searchFavorites() {
+            const q = (document.getElementById('searchInput').value || '').toLowerCase();
+            const favs = getSortedFavs();
+            renderFavGrid(q ? favs.filter(p => p.title.toLowerCase().includes(q)) : favs);
+        }
+
+        function sortFavs(type, btn) {
+            currentSort = type;
+            document.querySelectorAll('.fav-sort-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            renderFavoritesPage();
+        }
+
+        function getSortedFavs() {
+            let favs = JSON.parse(localStorage.getItem('daraz_favorites')) || [];
+            const price = p => parseInt((p.new_price || '0').replace(/\D/g, '')) || 0;
+            const disc  = p => parseInt((p.discount_percent || '0').replace(/\D/g, '')) || 0;
+            if (currentSort === 'discount')   favs.sort((a, b) => disc(b) - disc(a));
+            if (currentSort === 'price_low')  favs.sort((a, b) => price(a) - price(b));
+            if (currentSort === 'price_high') favs.sort((a, b) => price(b) - price(a));
+            return favs;
+        }
+
+        function renderFavoritesPage() {
+            const favs = getSortedFavs();
+            updateFavStats(favs);
+            renderFavGrid(favs);
+        }
+
+        function updateFavStats(favs) {
+            let savings = 0, totalDisc = 0, discCount = 0;
+            favs.forEach(p => {
+                const n = parseInt((p.new_price || '0').replace(/\D/g, '')) || 0;
+                const o = parseInt((p.old_price || '0').replace(/\D/g, '')) || 0;
+                if (o > n) savings += (o - n);
+                const d = parseInt((p.discount_percent || '0').replace(/\D/g, '')) || 0;
+                if (d > 0) { totalDisc += d; discCount++; }
+            });
+            document.getElementById('stat-count').textContent = favs.length;
+            document.getElementById('fav-count').textContent  = favs.length;
+            document.getElementById('stat-savings').textContent = `Rs. ${savings.toLocaleString()}`;
+            document.getElementById('stat-avg').textContent = discCount > 0 ? `${Math.round(totalDisc / discCount)}%` : '0%';
+        }
+
+        function renderFavGrid(favs) {
+            const container = document.getElementById('favorites-grid');
+            if (!container) return;
+            if (favs.length === 0) {
+                container.innerHTML = `
+                    <div class="fav-empty">
+                        <div class="fav-empty-heart"><i class="far fa-heart"></i></div>
+                        <h2>No saved deals yet</h2>
+                        <p>Start exploring and heart the deals you love — they'll appear here!</p>
+                        <a href="/" class="fav-browse-btn"><i class="fas fa-fire"></i> Browse Hot Deals</a>
+                    </div>`;
+                return;
+            }
+            container.innerHTML = '';
+            favs.forEach(p => container.appendChild(createFavCard(p)));
+        }
+
+        function createFavCard(product) {
+            const newP = parseInt((product.new_price || '0').replace(/\D/g, '')) || 0;
+            const oldP = parseInt((product.old_price || '0').replace(/\D/g, '')) || 0;
+            const saved = oldP > newP ? oldP - newP : 0;
+            const disc = product.discount_percent || '';
+
+            const card = document.createElement('div');
+            card.className = 'fav-card';
+            card.dataset.title = product.title;
+            card.innerHTML = `
+                <div class="fav-card-img" onclick="window.location.href='/product/${product.id || 0}'">
+                    ${disc ? `<div class="fav-badge">${disc} OFF</div>` : ''}
+                    <img src="${product.image}" alt="${product.title}" loading="lazy">
+                    <button class="fav-remove-btn" onclick="removeFav(event, '${product.title.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="fav-card-body">
+                    <h3 onclick="window.location.href='/product/${product.id || 0}'">${product.title}</h3>
+                    <div class="fav-price-row">
+                        <span class="fav-new-price">${product.new_price}</span>
+                        ${product.old_price ? `<span class="fav-old-price">${product.old_price}</span>` : ''}
+                    </div>
+                    ${saved > 0 ? `<div class="fav-savings-tag"><i class="fas fa-tag"></i> Save Rs. ${saved.toLocaleString()}</div>` : ''}
+                    <div class="fav-card-actions">
+                        <a href="${product.affiliate_link || product.product_link}" target="_blank" class="fav-buy-btn" onclick="trackClick(${product.id || 0})">
+                            <i class="fas fa-bolt"></i> Grab Deal
+                        </a>
+                        <button onclick="removeFav(event, '${product.title.replace(/'/g, "\\'")}', this)" class="fav-del-btn">
+                            <i class="fas fa-heart-broken"></i>
+                        </button>
+                    </div>
+                </div>`;
+            return card;
+        }
+
+        function removeFav(e, title, btn) {
+            e.stopPropagation();
+            const card = document.querySelector(`.fav-card[data-title="${title}"]`);
+            if (card) {
+                card.style.transition = 'all 0.3s ease';
+                card.style.transform = 'scale(0.85)';
+                card.style.opacity = '0';
+                setTimeout(() => {
+                    favorites = favorites.filter(p => p.title !== title);
+                    localStorage.setItem('daraz_favorites', JSON.stringify(favorites));
+                    renderFavoritesPage();
+                    updateFavCount();
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>
