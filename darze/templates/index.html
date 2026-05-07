@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DealSathi | Premium Daraz Deals</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css?v=2.0">
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="handleLogoClick()">DealSathi</div>
+        
+        <!-- Secret API Key Modal -->
+        <div id="apiModal" class="modal">
+            <div class="modal-content modal-wide">
+                <div class="modal-header">
+                    <h3>⚡ Admin Dashboard</h3>
+                    <button onclick="closeModal()" class="modal-close-btn"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-auth-section" id="modalAuthSection">
+                    <input type="email" id="adminEmail" placeholder="Admin Email">
+                    <input type="password" id="adminPass" placeholder="Admin Password">
+                    <div class="modal-actions">
+                        <button onclick="generateKey()"><i class="fas fa-key"></i> Access Dashboard</button>
+                    </div>
+                    <div id="apiKeyResult" class="key-result"></div>
+                </div>
+                <div id="revenueDashboard" class="revenue-dashboard" style="display:none;">
+                    <div class="rev-api-key-row">
+                        <span id="revApiKeyDisplay" class="rev-key-text"></span>
+                        <button onclick="regenKey()" class="rev-regen-btn"><i class="fas fa-sync"></i> Regen Key</button>
+                    </div>
+                    <div class="rev-stats-grid">
+                        <div class="rev-stat-card rev-highlight">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <div class="rev-stat-val" id="revEarnings">Rs. 0</div>
+                            <div class="rev-stat-label">Est. Revenue (5%)</div>
+                        </div>
+                        <div class="rev-stat-card">
+                            <i class="fas fa-mouse-pointer"></i>
+                            <div class="rev-stat-val" id="revTotalClicks">0</div>
+                            <div class="rev-stat-label">Total Clicks</div>
+                        </div>
+                        <div class="rev-stat-card">
+                            <i class="fas fa-calendar-day"></i>
+                            <div class="rev-stat-val" id="revTodayClicks">0</div>
+                            <div class="rev-stat-label">Today's Clicks</div>
+                        </div>
+                        <div class="rev-stat-card">
+                            <i class="fas fa-calendar-week"></i>
+                            <div class="rev-stat-val" id="revWeekClicks">0</div>
+                            <div class="rev-stat-label">This Week</div>
+                        </div>
+                        <div class="rev-stat-card">
+                            <i class="fas fa-box-open"></i>
+                            <div class="rev-stat-val" id="revTotalProducts">0</div>
+                            <div class="rev-stat-label">Total Products</div>
+                        </div>
+                    </div>
+                    <div class="rev-section">
+                        <h4><i class="fas fa-fire"></i> Top Clicked Products</h4>
+                        <div id="revTopProducts" class="rev-product-list"></div>
+                    </div>
+                    <div class="rev-section">
+                        <h4><i class="fas fa-chart-bar"></i> Category Performance</h4>
+                        <div id="revCategories" class="rev-cat-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav class="top-nav">
+            <a href="/" class="nav-link active"><i class="fas fa-home"></i> Home</a>
+            <a href="/favorites" class="nav-link"><i class="fas fa-heart"></i> Favorites <span id="fav-count" class="count-badge">0</span></a>
+        </nav>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search for products, brands and more...">
+            <button onclick="searchProducts()"><i class="fas fa-search"></i> Search</button>
+        </div>
+    </header>
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <h2>Find the Best Daraz Deals in Seconds</h2>
+            <p>Automatically tracked high-discount items, trending products, and flash sales from all Daraz categories.</p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-value">2000+</span>
+                    <span class="stat-label">Live Deals</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">90%</span>
+                    <span class="stat-label">Max Discount</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">24/7</span>
+                    <span class="stat-label">Updates</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="nav-section">
+        <section class="filters">
+            <button onclick="loadProducts()" class="active">All Deals</button>
+            <button onclick="loadTrending()">Trending Now</button>
+            <button onclick="loadFlashSale()">Flash Sales</button>
+        </section>
+
+        <section id="categories-container" class="categories-list">
+            <span class="category-label">Categories:</span>
+            <button onclick="loadByCategory('smartphones')">Smartphones</button>
+            <button onclick="loadByCategory('laptops')">Laptops</button>
+            <button onclick="loadByCategory('smart-watches')">Smart-watches</button>
+            <button onclick="loadByCategory('headphones')">Headphones</button>
+            <button onclick="loadByCategory('monitors')">Monitors</button>
+            <button onclick="loadByCategory('cameras')">Cameras</button>
+            <button onclick="loadByCategory('men-clothing')">Men's Clothing</button>
+            <button onclick="loadByCategory('women-clothing')">Women's Clothing</button>
+            <button onclick="loadByCategory('home-appliances')">Home Appliances</button>
+            <button onclick="loadByCategory('groceries')">Groceries</button>
+            <!-- Dynamic categories will also sync here -->
+        </section>
+    </div>
+
+    <main>
+        <section id="mega-deals-container" class="featured-section">
+            <div class="section-header">
+                <h2 class="section-title">🔥 Mega Deals (Top Discounts)</h2>
+                <div id="countdown-timer" class="timer">Next refresh in: <span id="timer-display">59:59</span></div>
+            </div>
+            <div id="mega-deals-grid" class="mega-scroll">
+                <!-- Top 12 mega deals will load here side-by-side -->
+            </div>
+        </section>
+
+        <section id="products-container" class="grid-container">
+            <h2 class="section-title" id="grid-title">All Discounted Products</h2>
+            <!-- Products loaded via JS -->
+        </section>
+    </main>
+
+    <div class="mobile-nav">
+        <a href="/" class="mobile-nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="/favorites" class="mobile-nav-item">
+            <i class="fas fa-heart"></i>
+            <span>Favorites</span>
+        </a>
+        <a href="#" onclick="searchProducts()" class="mobile-nav-item">
+            <i class="fas fa-search"></i>
+            <span>Search</span>
+        </a>
+    </div>
+
+    <script src="/static/app.js?v=1.1"></script>
+</body>
+</html>

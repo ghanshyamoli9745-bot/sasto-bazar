@@ -142,15 +142,9 @@ def api_wishlist(id):
 def api_stats():
     return jsonify({'total_products': len(get_products())})
 
-# Initialize Background Tasks for Production (Gunicorn)
-def start_background_tasks():
-    # Only start threads in the main process
-    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-        print("Starting background scraper and scheduler...")
+if __name__ == '__main__':
+    import os
+    if not os.environ.get('WERKZEUG_RUN_MAIN'):
         threading.Thread(target=run_scraper_sync, daemon=True).start()
         threading.Thread(target=bg_task, daemon=True).start()
-
-start_background_tasks()
-
-if __name__ == '__main__':
     app.run(port=5000, debug=True)
