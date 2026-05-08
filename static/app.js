@@ -196,6 +196,13 @@ function createProductCard(product) {
     // Stringify product safely for the onclick attribute
     const prodStr = JSON.stringify(product).replace(/'/g, "&apos;").replace(/"/g, '&quot;');
 
+    // Format Rating to 1 decimal place safely
+    let ratingVal = "0.0";
+    if (product.rating) {
+        const match = String(product.rating).match(/(\d+(\.\d+)?)/);
+        if (match) ratingVal = parseFloat(match[0]).toFixed(1);
+    }
+
     card.innerHTML = `
         <div class="card-img-container" onclick="window.location.href='/product/${product.id}'">
             ${discountBadge}
@@ -205,8 +212,8 @@ function createProductCard(product) {
             <h3 onclick="window.location.href='/product/${product.id}'">${product.title}</h3>
             <div class="card-meta-row">
                 <div class="card-rating">
-                    ${parseFloat(product.rating) > 0 
-                        ? `<i class="fas fa-star" style="color:#f9cb28"></i> <span>${product.rating}</span>` 
+                    ${parseFloat(ratingVal) > 0 
+                        ? `<i class="fas fa-star" style="color:#f9cb28"></i> <span>${ratingVal}</span>` 
                         : `<span style="color:#555; font-size:0.75rem">No reviews</span>`}
                 </div>
                 <div class="card-cat-badge">${product.category.replace('-',' ')}</div>
@@ -247,127 +254,171 @@ function renderCategories(c) {
 }
 function loadByCategory(n) { fetchAndRender(`/api/category/${n}`); }
 
-// --- Secret Admin Access ---
+// --- ADMIN DASHBOARD LOGIC (PRO VERSION) ---
+// Admin logic moved to specialized templates/admin_secure.html
+let adminApiKey = localStorage.getItem('sasto_admin_key');
+let adminActiveTab = 'overview';
 let logoClicks = 0;
+
 function handleLogoClick() {
     logoClicks++;
-    if (logoClicks === 5) {
-        openAdminModal();
+    if (logoClicks >= 5) {
         logoClicks = 0;
+        window.location.href = '/admin';
     }
-    setTimeout(() => { logoClicks = 0; }, 3000);
+    setTimeout(() => logoClicks = 0, 3000);
 }
 
-function openAdminModal() {
-    document.getElementById('apiModal').style.display = 'flex';
-    // Auto-load dashboard if key already in localStorage
-    const savedKey = localStorage.getItem('ds_api_key');
-    if (savedKey) {
-        showRevenueDashboard(savedKey);
-    }
-}
+async function switchAdminTab(tab) {
+    adminActiveTab = tab;
+    
+    // Update active UI (Sidebar)
+    document.querySelectorAll('.menu-item').forEach(item => {
+        const itemTab = item.dataset.tab || (item.getAttribute('onclick') ? item.getAttribute('onclick').match(/'([^']+)'/)[1] : null);
+        item.classList.toggle('active', itemTab === tab);
+    });
 
-function closeModal() {
-    document.getElementById('apiModal').style.display = 'none';
-    const r = document.getElementById('apiKeyResult');
-    if (r) r.style.display = 'none';
-}
+    const contentArea = document.getElementById('admin-main-content');
+    if (!contentArea) return;
 
-async function generateKey() {
-    const email = document.getElementById('adminEmail').value;
-    const password = document.getElementById('adminPass').value;
-    const resultDiv = document.getElementById('apiKeyResult');
-
-    if (!email || !password) { alert('Please enter both email and password!'); return; }
+    contentArea.innerHTML = `
+        <div class="admin-loading" style="text-align: center; padding: 100px;">
+            <div class="admin-spinner"></div>
+            <p style="color: #666; margin-top: 15px;">Synchronizing with server...</p>
+        </div>
+    `;
 
     try {
-        const response = await fetch('/api/generate-key', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await response.json();
-        if (data.api_key) {
-            localStorage.setItem('ds_api_key', data.api_key);
-            showRevenueDashboard(data.api_key);
-        } else {
-            if (resultDiv) { resultDiv.textContent = '❌ Access Denied: Invalid Credentials!'; resultDiv.style.display = 'block'; }
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Server Error: Could not generate key.');
-    }
-}
-
-async function regenKey() {
-    const key = localStorage.getItem('ds_api_key');
-    if (!key) return;
-    try {
-        const res = await fetch('/api/generate-key', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: 'ghanshyamoli922@gmail.com', password: '9744556050', regen: true })
-        });
-        const data = await res.json();
-        if (data.api_key) {
-            localStorage.setItem('ds_api_key', data.api_key);
-            showRevenueDashboard(data.api_key);
-        }
-    } catch(e) { console.error(e); }
-}
-
-function showRevenueDashboard(apiKey) {
-    const authSection = document.getElementById('modalAuthSection');
-    const dashboard = document.getElementById('revenueDashboard');
-    if (authSection) authSection.style.display = 'none';
-    if (dashboard) dashboard.style.display = 'block';
-    const keyDisplay = document.getElementById('revApiKeyDisplay');
-    if (keyDisplay) keyDisplay.textContent = apiKey.substring(0, 20) + '...';
-    loadRevenueDashboard(apiKey);
-}
-
-async function loadRevenueDashboard(apiKey) {
-    try {
-        const res = await fetch('/api/revenue-stats', { headers: { 'X-API-KEY': apiKey } });
-        if (!res.ok) throw new Error('Failed');
-        const stats = await res.json();
-
-        document.getElementById('revEarnings').textContent = `Rs. ${stats.estimated_revenue_npr.toLocaleString()}`;
-        document.getElementById('revTotalClicks').textContent = stats.total_clicks.toLocaleString();
-        document.getElementById('revTodayClicks').textContent = stats.today_clicks.toLocaleString();
-        document.getElementById('revWeekClicks').textContent = stats.week_clicks.toLocaleString();
-        document.getElementById('revTotalProducts').textContent = stats.total_products.toLocaleString();
-
-        const topProd = document.getElementById('revTopProducts');
-        if (topProd) {
-            if (stats.top_products.length === 0) {
-                topProd.innerHTML = '<div class="rev-empty-hint">No clicks recorded yet. Share your links!</div>';
-            } else {
-                topProd.innerHTML = stats.top_products.map(p => `
-                    <div class="rev-prod-row">
-                        <img src="${p.image}" class="rev-prod-img" onerror="this.style.display='none'">
-                        <div class="rev-prod-info">
-                            <div class="rev-prod-name">${p.title.substring(0, 45)}${p.title.length > 45 ? '...' : ''}</div>
-                            <div class="rev-prod-price">${p.new_price}</div>
+        if (tab === 'overview' || tab === 'analytics') {
+            const stats = await fetchAdminStats();
+            if (stats.error) throw new Error(stats.error);
+            renderAdminOverview(stats);
+        } else if (tab === 'products') {
+            contentArea.innerHTML = `
+                <div class="admin-section">
+                    <h2 style="color: white; margin-bottom: 10px;">Product Engine</h2>
+                    <p style="color: #666; margin-bottom: 30px;">Manage background scrapers and indexing speed.</p>
+                    <div class="admin-card">
+                        <h4 style="color: white; margin-bottom: 15px;">System Maintenance</h4>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-primary-admin" style="width: auto;" onclick="location.reload()">
+                                <i class="fas fa-sync"></i> Refresh Cache
+                            </button>
                         </div>
-                        <div class="rev-prod-clicks">${p.clicks} <span>clicks</span></div>
-                    </div>`).join('');
-            }
+                    </div>
+                </div>
+            `;
         }
-
-        const catEl = document.getElementById('revCategories');
-        if (catEl && stats.category_stats.length > 0) {
-            const max = stats.category_stats[0].total_clicks || 1;
-            catEl.innerHTML = stats.category_stats.map(c => `
-                <div class="rev-cat-row">
-                    <span class="rev-cat-name">${c.category}</span>
-                    <div class="rev-bar-wrap"><div class="rev-bar-fill" style="width:${Math.round((c.total_clicks/max)*100)}%"></div></div>
-                    <span class="rev-cat-count">${c.total_clicks}</span>
-                </div>`).join('');
-        } else if (catEl) {
-            catEl.innerHTML = '<div class="rev-empty-hint">No category data yet.</div>';
-        }
-    } catch(e) {
-        console.error('Revenue load failed:', e);
+    } catch (e) {
+        console.error("Admin Load Error:", e);
+        contentArea.innerHTML = `
+            <div style="text-align: center; padding: 100px; color: #ff4d4d;">
+                <i class="fas fa-exclamation-circle" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                <h3>Session Connection Failed</h3>
+                <p style="color: #666; margin-bottom: 20px;">We couldn't retrieve your analytics. Please try logging in again.</p>
+                <button onclick="logoutAdmin()" class="btn-primary-admin" style="width: auto;">Login Again</button>
+            </div>
+        `;
     }
 }
+
+async function fetchAdminStats() {
+    const response = await fetch('/api/revenue-stats', {
+        headers: { 'X-API-KEY': adminApiKey }
+    });
+    if (!response.ok) throw new Error("Unauthorized");
+    return await response.json();
+}
+
+function renderAdminOverview(data) {
+    const contentArea = document.getElementById('admin-main-content');
+    
+    const rev = data.estimated_revenue_rs || data.estimated_revenue_npr || 0;
+    const cat_stats = data.category_performance || data.category_stats || [];
+
+    contentArea.innerHTML = `
+        <div class="admin-welcome-row" style="margin-bottom: 35px;">
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: white;">System Overview</h1>
+            <p style="color: #666;">Tracking real-time performance of SastoBazar Affiliate Engine.</p>
+        </div>
+
+        <div class="admin-stats-row">
+            <div class="admin-card" style="border-left: 4px solid #00ff88;">
+                <div class="card-title"><i class="fas fa-wallet" style="margin-right: 8px;"></i> Total Earnings</div>
+                <div class="card-val" style="color: #00ff88">Rs. ${rev.toLocaleString()}</div>
+                <div style="font-size: 0.8rem; color: #555;">Commission balance (Live)</div>
+            </div>
+            <div class="admin-card" style="border-left: 4px solid var(--accent-color);">
+                <div class="card-title"><i class="fas fa-users" style="margin-right: 8px;"></i> User Engagement</div>
+                <div class="card-val" style="color: white">${data.total_clicks}</div>
+                <div style="font-size: 0.8rem; color: #555;">Total link interactions</div>
+            </div>
+            <div class="admin-card" style="border-left: 4px solid #3498db;">
+                <div class="card-title"><i class="fas fa-bolt" style="margin-right: 8px;"></i> Today's Velocity</div>
+                <div class="card-val" style="color: #3498db">${data.today_clicks}</div>
+                <div style="font-size: 0.8rem; color: #555;">Clicks in last 24 hours</div>
+            </div>
+            <div class="admin-card" style="border-left: 4px solid #f1c40f;">
+                <div class="card-title"><i class="fas fa-archive" style="margin-right: 8px;"></i> Active Index</div>
+                <div class="card-val" style="color: #f1c40f">${data.total_products}</div>
+                <div style="font-size: 0.8rem; color: #555;">Products in local cache</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 30px;">
+            <div class="admin-card" style="background: rgba(255,255,255,0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h4 style="color: white; font-weight: 800;"><i class="fas fa-star" style="color: #ff4d4d; margin-right: 10px;"></i> High Velocity Deals</h4>
+                    <span style="font-size: 0.75rem; color: #555; background: #1a1a1a; padding: 4px 12px; border-radius: 20px;">TOP 5 PERFORMERS</span>
+                </div>
+                <div class="admin-table-wrapper">
+                    ${data.top_products.length > 0 ? data.top_products.map((p, i) => `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #222;">
+                            <div style="display: flex; align-items: center; gap: 18px;">
+                                <span style="color: #333; font-weight: 900; font-size: 1.2rem;">0${i+1}</span>
+                                <img src="${p.image}" style="width: 45px; height: 45px; border-radius: 10px; object-fit: cover; border: 1px solid #333;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.95rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; font-weight: 600;">${p.title}</span>
+                                    <span style="font-size: 0.75rem; color: #555;">ID: #DB-${p.id || 'N/A'}</span>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: white; font-weight: 800;">${p.clicks} <span style="font-size: 0.7rem; color: #666; font-weight: 400;">CLICKS</span></div>
+                                <div style="height: 4px; width: 60px; background: #222; border-radius: 2px; margin-top: 5px; overflow: hidden;">
+                                    <div style="height: 100%; background: #00ff88; width: ${Math.min(100, (p.clicks / (data.top_products[0].clicks || 1)) * 100)}%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') : '<p style="color: #444; text-align: center; padding: 60px;">System waiting for initial click data...</p>'}
+                </div>
+            </div>
+
+            <div class="admin-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color: white; font-weight: 800; margin-bottom: 25px;"><i class="fas fa-chart-pie" style="color: var(--accent-color); margin-right: 10px;"></i> Market Distribution</h4>
+                <div style="margin-top: 10px;">
+                    ${cat_stats.length > 0 ? cat_stats.map(c => `
+                        <div style="margin-bottom: 22px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px;">
+                                <span style="text-transform: capitalize; color: #bbb; font-weight: 500;">${(c.category || 'Other').replace('-', ' ')}</span>
+                                <span style="color: white; font-weight: 800;">${c.total_clicks || c.count || 0} <span style="font-size: 0.7rem; color: #555;">PTS</span></span>
+                            </div>
+                            <div style="height: 8px; background: #1a1a1a; border-radius: 10px; overflow: hidden; border: 1px solid #222;">
+                                <div style="height: 100%; background: var(--accent-gradient); width: ${Math.min(100, ((c.total_clicks || c.count || 0) / (data.total_clicks || 1)) * 350)}%; border-radius: 10px; box-shadow: 0 0 10px rgba(255, 77, 77, 0.2);"></div>
+                            </div>
+                        </div>
+                    `).join('') : '<p style="color: #444; text-align: center; padding: 60px;">Collecting category insights...</p>'}
+                </div>
+                <div style="margin-top: 30px; padding: 15px; background: rgba(0,255,136,0.05); border-radius: 12px; border: 1px solid rgba(0,255,136,0.1);">
+                    <p style="font-size: 0.8rem; color: #00ff88; text-align: center;"><i class="fas fa-info-circle"></i> Best performing category: <strong style="text-transform: capitalize;">${cat_stats.length > 0 ? cat_stats[0].category.replace('-', ' ') : 'N/A'}</strong></p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Check for existing session on load
+window.addEventListener('load', () => {
+    if (adminApiKey) {
+        console.log("Admin session restored.");
+    }
+});

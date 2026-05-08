@@ -56,6 +56,13 @@ def fetch_daraz_category(category_name):
                                 'affiliate_link': affiliate_link
                             }
                             insert_product(product_data, conn=conn)
+                            
+                            # Push to Firebase
+                            try:
+                                from firebase_manager import push_to_firebase
+                                push_to_firebase(product_data)
+                            except: pass
+                            
                             count += 1
                             if count >= 100: break
                 finally:
@@ -70,12 +77,9 @@ def scrape_daraz():
     Main entry point for scraping all major Daraz categories.
     """
     categories = [
-        # Electronics
         'smartphones', 'laptops', 'tablets', 'monitors', 'cameras', 'gaming-consoles', 
         'headphones', 'smart-watches', 'pc-components', 'storage', 'projectors',
-        # Appliances
         'televisions', 'home-appliances', 'kitchen-appliances', 'ac-cooling', 'vacuums',
-        # Fashion
         'men-clothing', 'women-clothing', 'men-shoes', 'women-shoes', 
         'men-watches', 'women-watches', 'jewelry', 'bags-travel',
         # Health & Beauty

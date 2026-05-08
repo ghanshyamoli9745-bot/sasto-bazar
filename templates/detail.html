@@ -195,7 +195,7 @@
                     stars += '<i class="far fa-star" style="color:#555"></i>';
                 }
             }
-            return `${stars} <span style="margin-left:5px; color:#fff">${score}</span>`;
+            return `${stars} <span style="margin-left:5px; color:#fff">${score.toFixed(1)}</span>`;
         }
 
         function renderProduct(product) {
