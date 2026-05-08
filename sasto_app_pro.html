@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SastoBazar Pro | Native Experience</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF6200;
+            --primary-light: #FF8533;
+            --bg: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636E72;
+            --shadow: 0 4px 20px rgba(0,0,0,0.05);
+            --radius: 18px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        /* Header Section */
+        header {
+            background: var(--primary);
+            padding: 20px 20px 30px;
+            border-bottom-left-radius: 25px;
+            border-bottom-right-radius: 25px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .header-top h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .header-top h1 span {
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            background: white;
+            padding: 12px 18px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .search-container input {
+            border: none;
+            outline: none;
+            flex: 1;
+            margin: 0 10px;
+            font-size: 0.95rem;
+        }
+
+        .search-container i {
+            color: var(--text-muted);
+        }
+
+        /* Banner Section */
+        .banner {
+            margin: 20px;
+            background: linear-gradient(135deg, #FF6200, #FF3D00);
+            border-radius: var(--radius);
+            padding: 25px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            top: -20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .banner .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .banner h2 {
+            font-size: 1.6rem;
+            margin: 15px 0 5px;
+            font-weight: 800;
+        }
+
+        .banner p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Category Section */
+        .section-title {
+            padding: 0 20px;
+            margin: 25px 0 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .section-title a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .categories {
+            display: flex;
+            overflow-x: auto;
+            padding: 0 20px;
+            gap: 12px;
+            scrollbar-width: none;
+        }
+
+        .categories::-webkit-scrollbar { display: none; }
+
+        .cat-chip {
+            padding: 10px 20px;
+            background: white;
+            border-radius: 25px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .cat-chip.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Product Grid */
+        .trending-scroll {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 20px 20px;
+            gap: 15px;
+            scrollbar-width: none;
+        }
+
+        .trending-scroll::-webkit-scrollbar { display: none; }
+
+        .product-card {
+            background: white;
+            min-width: 180px;
+            max-width: 180px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 12px;
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .discount-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #FF6200;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 6px;
+            z-index: 10;
+        }
+
+        .product-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .product-info .cat-tag {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: capitalize;
+            margin-bottom: 4px;
+        }
+
+        .product-info h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            height: 38px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .new-price {
+            font-weight: 800;
+            color: var(--primary);
+            font-size: 0.95rem;
+        }
+
+        .old-price {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .buy-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+            z-index: 2000;
+        }
+
+        .nav-item {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        /* Key Input Overlay */
+        #auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        #auth-overlay input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            margin: 20px 0;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        #auth-overlay button {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Loading */
+        .loader {
+            padding: 50px;
+            text-align: center;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+
+
+    <header>
+        <div class="header-top">
+            <h1>Sasto <span>Bazar</span> 🛍️</h1>
+            <i class="fas fa-bell" style="font-size: 1.2rem;"></i>
+        </div>
+        <div class="search-container">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search products, brands..." oninput="debounceSearch()">
+            <i class="fas fa-microphone"></i>
+        </div>
+    </header>
+
+    <div class="banner">
+        <span class="badge">🔥 Hot</span>
+        <h2>Big Deals Today</h2>
+        <p>Up to 70% off on top brands</p>
+    </div>
+
+    <div class="section-title">
+        <h3>Categories</h3>
+    </div>
+    <div class="categories" id="categories-list">
+        <div class="cat-chip active" onclick="filterCategory('all', this)">All</div>
+        <!-- Injected via JS -->
+    </div>
+
+    <div class="section-title">
+        <h3>Top Trending</h3>
+        <a href="#">See All →</a>
+    </div>
+    <div class="trending-scroll" id="trending-list">
+        <div class="loader"><i class="fas fa-spinner fa-spin"></i> Syncing...</div>
+    </div>
+
+    <div class="section-title">
+        <h3>Today's Deals</h3>
+    </div>
+    <div id="deals-list" style="padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <!-- Injected via JS -->
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active"><i class="fas fa-home"></i>Home</div>
+        <div class="nav-item"><i class="fas fa-th-large"></i>Categories</div>
+        <div class="nav-item"><i class="fas fa-heart"></i>Wishlist</div>
+        <div class="nav-item"><i class="fas fa-user"></i>Profile</div>
+    </nav>
+
+    <script>
+        let API_KEY = "ds_L9DYmjaKWUgWgiFML9nG_3YILi_155A_U0XeDO1d6EY";
+        let BASE_URL = "https://sasto-bazar-1.onrender.com";
+        let allProducts = [];
+
+        // Auto-load data on startup
+        window.onload = loadData;
+
+        async function loadData() {
+            try {
+                // Load Categories
+                const catRes = await fetch(`${BASE_URL}/api/v1/categories`, {
+                    headers: { 'X-API-KEY': API_KEY }
+                });
+                const categories = await catRes.json();
+                
+                if (categories.error) {
+                    throw new Error(categories.error);
+                }
+                
+                renderCategories(categories);
+
+                // Load All Deals
+                const dealRes = await fetch(`${BASE_URL}/api/v1/deals`, {
+                    headers: { 'X-API-KEY': API_KEY }
+                });
+                const deals = await dealRes.json();
+                
+                if (deals.error) {
+                    throw new Error(deals.error);
+                }
+                
+                allProducts = deals;
+                renderProducts(allProducts);
+            } catch (err) {
+                console.error(err);
+                alert("Connection Error: " + err.message);
+            }
+        }
+
+        function renderCategories(cats) {
+            const list = document.getElementById('categories-list');
+            cats.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'cat-chip';
+                div.textContent = cat.replace('-', ' ');
+                div.onclick = () => filterCategory(cat, div);
+                list.appendChild(div);
+            });
+        }
+
+        function renderProducts(products) {
+            const trending = document.getElementById('trending-list');
+            const main = document.getElementById('deals-list');
+            
+            trending.innerHTML = '';
+            main.innerHTML = '';
+
+            // Render Trending (Top 5)
+            products.slice(0, 6).forEach(p => trending.appendChild(createCard(p)));
+            
+            // Render All
+            products.slice(6).forEach(p => main.appendChild(createCard(p)));
+        }
+
+        function createCard(p) {
+            const div = document.createElement('div');
+            div.className = 'product-card';
+            
+            const discount = p.discount_percent || "";
+            
+            div.innerHTML = `
+                ${discount ? `<div class="discount-badge">${discount}</div>` : ''}
+                <img src="${p.image}" class="product-img" alt="product">
+                <div class="product-info">
+                    <div class="cat-tag">${p.category}</div>
+                    <h4>${p.title}</h4>
+                    <div class="price-row">
+                        <span class="new-price">${p.new_price}</span>
+                        <span class="old-price">${p.old_price}</span>
+                    </div>
+                    <button class="buy-btn" onclick="window.open('${p.affiliate_link}', '_blank')">
+                        <i class="fas fa-shopping-cart"></i> Buy Now
+                    </button>
+                </div>
+            `;
+            return div;
+        }
+
+        function filterCategory(cat, el) {
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            
+            if (cat === 'all') {
+                renderProducts(allProducts);
+            } else {
+                const filtered = allProducts.filter(p => p.category === cat);
+                renderProducts(filtered);
+            }
+        }
+
+        let searchTimeout;
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                const q = document.getElementById('searchInput').value;
+                if (!q) return renderProducts(allProducts);
+                
+                const res = await fetch(`${BASE_URL}/api/search?q=${encodeURIComponent(q)}`);
+                const results = await res.json();
+                renderProducts(results);
+            }, 500);
+        }
+    </script>
+</body>
+</html>
