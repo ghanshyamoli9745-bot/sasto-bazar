@@ -1,5 +1,7 @@
 playwright
 flask
+flask-cors
+pyrebase4
 schedule
 python-dotenv
 gunicorn
